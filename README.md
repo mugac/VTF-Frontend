@@ -1,4 +1,107 @@
-# React + TypeScript + Vite
+# VTF - Volatility Forensics Platform
+
+Frontend aplikace pro analýzu memory dumpů pomocí Volatility Framework.
+
+## 🚀 Technologie
+
+- **React 19** - UI knihovna
+- **TypeScript** - Typovaný JavaScript
+- **Vite** - Build nástroj a dev server
+- **Tailwind CSS** - Utility-first CSS framework
+- **AG Grid** - Pokročilá datová tabulka
+- **Axios** - HTTP klient pro API komunikaci
+
+## 📋 Požadavky
+
+- Node.js 18+ 
+- npm nebo yarn
+- Backend API běžící na portu 8000 (nebo upravte `.env`)
+
+## 🛠️ Instalace
+
+```bash
+npm install
+```
+
+## ⚙️ Konfigurace
+
+Upravte soubor `.env` pro nastavení API URL:
+
+```env
+VITE_API_URL=http://localhost:8000
+```
+
+## 🏃 Spuštění
+
+Vývojový server:
+```bash
+npm run dev
+```
+
+Aplikace poběží na `http://localhost:5173`
+
+Build pro produkci:
+```bash
+npm run build
+```
+
+## 📁 Struktura projektu
+
+```
+src/
+├── api/
+│   └── vtfApi.ts           # API komunikace s backendem
+├── components/
+│   ├── UploadForm.tsx      # Formulář pro nahrání souboru
+│   └── ResultsGrid.tsx     # AG Grid tabulka s výsledky
+├── App.tsx                 # Hlavní komponenta s řízením stavů
+├── main.tsx                # Entry point
+└── index.css               # Globální styly
+```
+
+## 🔄 Workflow aplikace
+
+1. **Upload** - Uživatel nahraje memory dump soubor
+2. **Processing** - Backend analyzuje soubor, frontend polluje stav každé 2 sekundy
+3. **Results** - Po dokončení se zobrazí výsledky v AG Grid tabulce
+
+## 🔌 Backend API
+
+Aplikace očekává následující endpointy:
+
+- `POST /api/v1/upload` - Nahrání souboru
+  - Input: `multipart/form-data` s polem `file`
+  - Output: `{ "analysis_id": "string" }`
+
+- `GET /api/v1/status/{analysis_id}` - Kontrola stavu
+  - Output: `{ "status": "in_progress" | "completed" }`
+
+- `GET /api/v1/results/{analysis_id}` - Získání výsledků
+  - Output: `Array<Object>` (pole JSON objektů)
+
+## 🎨 Features
+
+- ✅ Upload memory dump souborů s progress indikátorem
+- ✅ Real-time sledování stavu analýzy
+- ✅ Automatické zobrazení výsledků po dokončení
+- ✅ Plně responzivní AG Grid tabulka s:
+  - Třídění sloupců
+  - Filtrování
+  - Stránkování
+  - Změna velikosti sloupců
+- ✅ Error handling a validace
+- ✅ Možnost nahrát nový soubor po dokončení
+
+## 📝 TODO pro budoucí rozšíření
+
+- [ ] Přidat podporu více pluginů Volatility
+- [ ] Export výsledků (CSV, JSON, Excel)
+- [ ] Historie analýz
+- [ ] WebSocket notifikace místo pollingu
+- [ ] Dark mode
+- [ ] Autentizace a uživatelské role
+
+## React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
