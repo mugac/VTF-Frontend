@@ -36,6 +36,18 @@ export default function ProjectList({
     }
   };
 
+  const getOSIcon = (osType?: string): string => {
+    if (osType === 'windows') return '🪟';
+    if (osType === 'linux') return '🐧';
+    return '💾';
+  };
+
+  const getOSBadgeColor = (osType?: string): string => {
+    if (osType === 'windows') return 'bg-blue-100 text-blue-700';
+    if (osType === 'linux') return 'bg-green-100 text-green-700';
+    return 'bg-gray-100 text-gray-600';
+  };
+
   return (
     <div className="max-w-6xl mx-auto p-6">
       <div className="mb-6">
@@ -82,15 +94,28 @@ export default function ProjectList({
                 className="bg-white rounded-lg shadow-md p-5 cursor-pointer hover:shadow-xl transition-all hover:scale-105 border-2 border-transparent hover:border-blue-500"
               >
                 <div className="flex items-start justify-between mb-3">
-                  <div className="text-3xl">💾</div>
-                  <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
-                    {formatFileSize(project.size_bytes)}
-                  </span>
+                  <div className="text-3xl">{getOSIcon(project.os_type)}</div>
+                  <div className="flex flex-col gap-1 items-end">
+                    {project.os_type && (
+                      <span className={`text-xs px-2 py-1 rounded font-medium ${getOSBadgeColor(project.os_type)}`}>
+                        {project.os_type.toUpperCase()}
+                      </span>
+                    )}
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                      {formatFileSize(project.size_bytes)}
+                    </span>
+                  </div>
                 </div>
                 
-                <h3 className="font-bold text-lg mb-2 truncate" title={project.filename}>
-                  {project.filename}
+                <h3 className="font-bold text-lg mb-1 truncate" title={project.project_name || project.filename}>
+                  {project.project_name || project.filename}
                 </h3>
+                
+                {project.project_name && project.project_name !== project.filename && (
+                  <p className="text-xs text-gray-500 truncate mb-2" title={project.filename}>
+                    {project.filename}
+                  </p>
+                )}
                 
                 <p className="text-sm text-gray-500 mb-2">
                   {formatDate(project.uploaded_at)}

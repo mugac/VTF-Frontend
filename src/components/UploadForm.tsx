@@ -1,4 +1,5 @@
-import { useState, FormEvent } from 'react';
+import { useState } from 'react';
+import type { FormEvent } from 'react';
 import type { UploadResponse, DetectOSResponse } from '../api/vtfApi';
 
 interface UploadFormProps {
@@ -9,6 +10,7 @@ interface UploadFormProps {
 
 export default function UploadForm({ onUploadSuccess, onError, onBack }: UploadFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [projectName, setProjectName] = useState<string>('');
   const [isUploading, setIsUploading] = useState(false);
   const [uploadResponse, setUploadResponse] = useState<UploadResponse | null>(null);
   
@@ -26,6 +28,12 @@ export default function UploadForm({ onUploadSuccess, onError, onBack }: UploadF
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
+      // Automaticky nastavíme název projektu podle jména souboru (bez přípony)
+      if (!projectName) {
+        const fileName = e.target.files[0].name;
+        const nameWithoutExt = fileName.replace(/\.(vmem|raw|mem|dmp)$/i, '');
+        setProjectName(nameWithoutExt);
+      }
     }
   };
 
@@ -47,7 +55,7 @@ export default function UploadForm({ onUploadSuccess, onError, onBack }: UploadF
 
     try {
       const { uploadFile } = await import('../api/vtfApi');
-      const response = await uploadFile(selectedFile);
+      const response = await uploadFile(selectedFile, projectName || undefined);
       setUploadResponse(response);
     } catch (error) {
       onError(error instanceof Error ? error.message : 'Nahrávání selhalo');
@@ -134,6 +142,22 @@ export default function UploadForm({ onUploadSuccess, onError, onBack }: UploadF
         <h2 className="text-3xl font-bold mb-6 text-center">Nahrát Memory Dump</h2>
         
         <form onSubmit={handleSubmit} className="space-y-6">
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Název projektu
+            </label>
+            <input
+              type="text"
+              value={projectName}
+              onChange={(e) => setProjectName(e.target.value)}
+              placeholder="např. Windows10_Investigation"
+              className="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            />
+            <p className="mt-1 text-xs text-gray-500">
+              Pokud nevyplníte, použije se název souboru
+            </p>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-2">
               Vyberte soubor memory dumpu

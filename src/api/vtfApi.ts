@@ -23,6 +23,8 @@ export interface ProjectInfo {
   filename: string;
   size_bytes: number;
   uploaded_at: string;
+  project_name?: string;
+  os_type?: string;
 }
 
 export interface PluginInfo {
@@ -64,9 +66,12 @@ export interface ResultRow {
 /**
  * Nahraje soubor na backend a vrátí analysis_id
  */
-export async function uploadFile(file: File): Promise<UploadResponse> {
+export async function uploadFile(file: File, projectName?: string): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append('file', file);
+  if (projectName) {
+    formData.append('project_name', projectName);
+  }
 
   const response = await axios.post<UploadResponse>(
     `${API_BASE_URL}/api/v1/upload`,
@@ -89,6 +94,16 @@ export async function detectOS(analysisId: string): Promise<DetectOSResponse> {
     `${API_BASE_URL}/api/v1/detect-os/${analysisId}`
   );
   return response.data;
+}
+
+/**
+ * Aktualizuje název projektu
+ */
+export async function updateProject(analysisId: string, projectName: string): Promise<void> {
+  await axios.patch(
+    `${API_BASE_URL}/api/v1/uploads/${analysisId}`,
+    { project_name: projectName }
+  );
 }
 
 /**
