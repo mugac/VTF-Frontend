@@ -160,6 +160,7 @@ function App() {
       {appState === 'plugin-selection' && (
         <PluginSelector
           plugins={plugins}
+          analysisId={analysisId!}
           onPluginSelect={handlePluginSelect}
           onBackToUpload={handleBackToUpload}
         />
