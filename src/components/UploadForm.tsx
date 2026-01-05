@@ -129,9 +129,33 @@ export default function UploadForm({ onUploadSuccess, onError, onBack }: UploadF
     }
   };
 
-  const handleContinue = () => {
-    if (selectedOS === 'windows' && uploadResponse) {
+  const handleContinue = async () => {
+    if (!uploadResponse) return;
+    
+    try {
+      // Uložíme vybraný OS do metadat
+      const { updateProject } = await import('../api/vtfApi');
+      await updateProject(uploadResponse.analysis_id, { osType: selectedOS });
+      
+      // Pokračujeme dál
       onUploadSuccess(uploadResponse.analysis_id);
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Nepodařilo se aktualizovat OS');
+    }
+  };
+  
+  const handleLinuxContinueWithoutSymbols = async () => {
+    if (!uploadResponse) return;
+    
+    try {
+      // Uložíme vybraný OS do metadat
+      const { updateProject } = await import('../api/vtfApi');
+      await updateProject(uploadResponse.analysis_id, { osType: selectedOS });
+      
+      // Pokračujeme dál
+      onUploadSuccess(uploadResponse.analysis_id);
+    } catch (error) {
+      onError(error instanceof Error ? error.message : 'Nepodařilo se aktualizovat OS');
     }
   };
 
@@ -246,12 +270,28 @@ export default function UploadForm({ onUploadSuccess, onError, onBack }: UploadF
           </label>
           <select
             value={selectedOS}
-            onChange={(e) => setSelectedOS(e.target.value as 'windows' | 'linux')}
+            onChange={async (e) => {
+              const newOS = e.target.value as 'windows' | 'linux';
+              setSelectedOS(newOS);
+              
+              // Automaticky uložíme OS do metadat
+              if (uploadResponse) {
+                try {
+                  const { updateProject } = await import('../api/vtfApi');
+                  await updateProject(uploadResponse.analysis_id, { osType: newOS });
+                } catch (error) {
+                  console.error('Nepodařilo se aktualizovat OS:', error);
+                }
+              }
+            }}
             className="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           >
             <option value="windows">Windows</option>
             <option value="linux">Linux</option>
           </select>
+          <p className="mt-1 text-xs text-gray-500">
+            OS se automaticky uloží do projektu
+          </p>
         </div>
 
         {/* Tlačítko pro detekci OS */}
@@ -336,7 +376,7 @@ export default function UploadForm({ onUploadSuccess, onError, onBack }: UploadF
               </button>
               
               <button
-                onClick={() => onUploadSuccess(uploadResponse.analysis_id)}
+                onClick={handleLinuxContinueWithoutSymbols}
                 className="w-full bg-gray-500 text-white px-4 py-2 rounded-lg hover:bg-gray-600 font-semibold transition"
               >
                 Pokračovat bez symbolů (omezená funkcionalita)

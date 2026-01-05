@@ -97,12 +97,22 @@ export async function detectOS(analysisId: string): Promise<DetectOSResponse> {
 }
 
 /**
- * Aktualizuje název projektu
+ * Aktualizuje název projektu a/nebo OS typu
  */
-export async function updateProject(analysisId: string, projectName: string): Promise<void> {
+export async function updateProject(
+  analysisId: string, 
+  updates: { projectName?: string; osType?: string }
+): Promise<void> {
+  const payload: { project_name?: string; os_type?: string } = {};
+  if (updates.projectName !== undefined) {
+    payload.project_name = updates.projectName;
+  }
+  if (updates.osType !== undefined) {
+    payload.os_type = updates.osType;
+  }
   await axios.patch(
     `${API_BASE_URL}/api/v1/uploads/${analysisId}`,
-    { project_name: projectName }
+    payload
   );
 }
 
