@@ -14,10 +14,6 @@ interface ResultsGridProps {
 }
 
 export default function ResultsGrid({ data, onBackToUpload }: ResultsGridProps) {
-  console.log('ResultsGrid - Přijatá data:', data);
-  console.log('ResultsGrid - Typ dat:', typeof data);
-  console.log('ResultsGrid - Je pole?', Array.isArray(data));
-  
   // Automaticky vygenerujeme sloupce na základě klíčů prvního řádku dat
   const columnDefs: ColDef[] = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -41,27 +37,16 @@ export default function ResultsGrid({ data, onBackToUpload }: ResultsGridProps) 
   }), []);
 
   return (
-    <div className="h-screen flex flex-col p-6">
-      <div className="mb-4 flex justify-between items-center">
-        <h2 className="text-3xl font-bold">Výsledky analýzy</h2>
-        <button
-          onClick={onBackToUpload}
-          className="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-        >
-          ← Nahrát nový soubor
-        </button>
-      </div>
-
+    <div className="h-screen flex flex-col p-6 pt-2">
       {!data || data.length === 0 ? (
         <div className="flex-1 flex items-center justify-center bg-white rounded-lg shadow-md">
           <div className="text-center">
             <p className="text-gray-500 text-lg mb-2">Žádná data k zobrazení</p>
             <p className="text-gray-400 text-sm">Analýza nevrátila žádné výsledky</p>
-            <p className="text-xs text-gray-300 mt-2">Data: {JSON.stringify(data)}</p>
           </div>
         </div>
       ) : (
-        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 120px)', width: '100%' }}>
+        <div className="ag-theme-alpine" style={{ height: 'calc(100vh - 150px)', width: '100%' }}>
           <AgGridReact
             rowData={data}
             columnDefs={columnDefs}

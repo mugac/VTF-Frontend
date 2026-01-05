@@ -3,9 +3,10 @@ import { useState, FormEvent } from 'react';
 interface UploadFormProps {
   onUploadSuccess: (analysisId: string) => void;
   onError: (error: string) => void;
+  onBack?: () => void;
 }
 
-export default function UploadForm({ onUploadSuccess, onError }: UploadFormProps) {
+export default function UploadForm({ onUploadSuccess, onError, onBack }: UploadFormProps) {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -38,8 +39,17 @@ export default function UploadForm({ onUploadSuccess, onError }: UploadFormProps
 
   return (
     <div className="max-w-2xl mx-auto p-6">
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="mb-4 text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1"
+        >
+          ← Zpět na projekty
+        </button>
+      )}
+      
       <h2 className="text-3xl font-bold mb-6 text-center">
-        Volatility Forensics Platform
+        Nový projekt - Nahrát memory dump
       </h2>
       
       <form onSubmit={handleSubmit} className="bg-white shadow-md rounded-lg p-6">
