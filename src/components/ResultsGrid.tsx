@@ -71,41 +71,71 @@ export default function ResultsGrid({ data, analysisId, pluginName, onBackToUplo
   }, [analysisId]);
 
   return (
-    <div className="h-screen flex flex-col p-6 pt-2">
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       {/* Export toolbar */}
-      <div className="flex gap-2 mb-2 justify-end items-center">
+      <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', justifyContent: 'flex-end' }}>
         {hasPidColumn && (
-          <span className="text-xs text-gray-500 mr-auto">
-            Tip: Klikněte na PID pro cross-plugin korelaci
+          <span style={{ fontSize: '0.8125rem', color: 'var(--color-slate-500)', marginRight: 'auto' }}>
+            💡 Tip: Klikněte na PID pro cross-plugin korelaci
           </span>
         )}
         <a
           href={getExportUrl(analysisId, pluginName, 'csv')}
-          className="bg-green-600 hover:bg-green-700 text-white text-sm font-medium py-1.5 px-3 rounded transition-colors"
+          className="vtf-btn"
+          style={{ 
+            padding: '0.5rem 1rem',
+            fontSize: '0.875rem',
+            background: 'var(--color-success)',
+            color: 'white',
+            textDecoration: 'none'
+          }}
           download
         >
-          Export CSV
+          📊 Export CSV
         </a>
         <a
           href={getExportUrl(analysisId, pluginName, 'json')}
-          className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-1.5 px-3 rounded transition-colors"
+          className="vtf-btn vtf-btn-primary"
+          style={{ 
+            padding: '0.5rem 1rem',
+            fontSize: '0.875rem'
+          }}
           download
         >
-          Export JSON
+          📄 Export JSON
         </a>
       </div>
 
       {!data || data.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center bg-white rounded-lg shadow-md">
-          <div className="text-center">
-            <p className="text-gray-500 text-lg mb-2">Žádná data k zobrazení</p>
-            <p className="text-gray-400 text-sm">Analýza nevrátila žádné výsledky</p>
+        <div className="vtf-card" style={{ 
+          flex: 1, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          minHeight: '400px'
+        }}>
+          <div className="vtf-empty-state">
+            <div className="vtf-empty-state-icon">📊</div>
+            <h3 className="vtf-empty-state-title">Žádná data k zobrazení</h3>
+            <p className="vtf-empty-state-description">
+              Analýza nevrátila žádné výsledky
+            </p>
           </div>
         </div>
       ) : (
-        <div className="flex flex-1 gap-4">
+        <div style={{ display: 'flex', flex: 1, gap: '1rem', minHeight: 0 }}>
           {/* Main grid */}
-          <div className={`ag-theme-alpine ${correlation ? 'flex-1' : 'w-full'}`} style={{ height: 'calc(100vh - 180px)' }}>
+          <div 
+            className={`ag-theme-alpine ${correlation ? '' : ''}`} 
+            style={{ 
+              flex: correlation ? '1' : '1',
+              height: '100%',
+              borderRadius: 'var(--radius-lg)',
+              overflow: 'hidden',
+              boxShadow: 'var(--shadow-md)',
+              border: '1px solid var(--color-slate-200)'
+            }}
+          >
             <AgGridReact
               rowData={data}
               columnDefs={columnDefs}
@@ -119,41 +149,98 @@ export default function ResultsGrid({ data, analysisId, pluginName, onBackToUplo
 
           {/* Correlation panel */}
           {isLoadingCorrelation && (
-            <div className="w-80 bg-white rounded-lg shadow-md p-4 flex items-center justify-center" style={{ height: 'calc(100vh - 180px)' }}>
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <div className="vtf-card" style={{ 
+              width: '400px', 
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <div className="vtf-loading">
+                <div className="vtf-spinner"></div>
+                <p style={{ color: 'var(--color-slate-600)', marginTop: '1rem', fontSize: '0.875rem' }}>
+                  Načítám korelaci...
+                </p>
+              </div>
             </div>
           )}
           
           {correlation && !isLoadingCorrelation && (
-            <div className="w-96 bg-white rounded-lg shadow-md overflow-y-auto" style={{ height: 'calc(100vh - 180px)' }}>
-              <div className="p-4 border-b sticky top-0 bg-white z-10">
-                <div className="flex justify-between items-center">
-                  <h4 className="font-bold text-lg">PID {correlation.pid}</h4>
+            <div className="vtf-card" style={{ 
+              width: '450px',
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
+              flexShrink: 0
+            }}>
+              <div style={{ 
+                padding: '1.25rem',
+                borderBottom: '1px solid var(--color-slate-200)',
+                background: 'var(--color-slate-50)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                  <h4 style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--color-slate-900)' }}>
+                    PID {correlation.pid}
+                  </h4>
                   <button
                     onClick={() => setCorrelation(null)}
-                    className="text-gray-400 hover:text-gray-600"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: 'var(--color-slate-400)',
+                      fontSize: '1.25rem',
+                      cursor: 'pointer',
+                      padding: '0.25rem',
+                      lineHeight: 1
+                    }}
                   >
                     ✕
                   </button>
                 </div>
-                <p className="text-xs text-gray-500">Cross-plugin korelace</p>
+                <p style={{ fontSize: '0.8125rem', color: 'var(--color-slate-500)' }}>
+                  Cross-plugin korelace
+                </p>
               </div>
               
-              <div className="p-4 space-y-4">
+              <div style={{ flex: 1, overflowY: 'auto', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {Object.entries(correlation.data).map(([label, info]) => (
-                  <div key={label} className="border rounded-lg p-3">
-                    <h5 className="font-semibold text-sm mb-2 flex justify-between">
-                      {label}
-                      <span className="text-xs text-gray-400 font-normal">{info.count} záznamů</span>
+                  <div key={label} className="vtf-card" style={{ padding: '1rem', background: 'var(--color-slate-50)' }}>
+                    <h5 style={{ 
+                      fontSize: '0.875rem', 
+                      fontWeight: 600, 
+                      marginBottom: '0.75rem',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      color: 'var(--color-slate-900)'
+                    }}>
+                      <span>{label}</span>
+                      <span className="vtf-badge vtf-badge-slate" style={{ fontSize: '0.6875rem' }}>
+                        {info.count} {info.count === 1 ? 'záznam' : info.count < 5 ? 'záznamy' : 'záznamů'}
+                      </span>
                     </h5>
-                    <div className="space-y-1 max-h-40 overflow-y-auto">
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', maxHeight: '200px', overflowY: 'auto' }}>
                       {info.rows.slice(0, 10).map((row, idx) => (
-                        <pre key={idx} className="text-xs bg-gray-50 p-2 rounded overflow-x-auto">
+                        <pre key={idx} style={{ 
+                          fontSize: '0.75rem',
+                          fontFamily: 'var(--font-mono)',
+                          background: 'white',
+                          padding: '0.625rem',
+                          borderRadius: 'var(--radius-md)',
+                          overflowX: 'auto',
+                          border: '1px solid var(--color-slate-200)',
+                          margin: 0,
+                          color: 'var(--color-slate-700)'
+                        }}>
                           {JSON.stringify(row, null, 1).substring(0, 200)}
                         </pre>
                       ))}
                       {info.count > 10 && (
-                        <p className="text-xs text-gray-400">... a dalších {info.count - 10}</p>
+                        <p style={{ fontSize: '0.75rem', color: 'var(--color-slate-400)', textAlign: 'center', marginTop: '0.25rem' }}>
+                          ... a dalších {info.count - 10}
+                        </p>
                       )}
                     </div>
                   </div>

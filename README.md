@@ -43,6 +43,8 @@ Aplikace poběží na `http://localhost:5173`
 Build pro produkci:
 ```bash
 npm run build
+
+uvicorn app.main:app --reload
 ```
 
 ## 📁 Struktura projektu

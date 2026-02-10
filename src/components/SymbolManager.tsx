@@ -67,25 +67,52 @@ export default function SymbolManager() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <h2 className="text-3xl font-bold mb-6">Správa symbolů</h2>
+    <div style={{ maxWidth: '1400px', margin: '0 auto' }}>
+      <div style={{ marginBottom: '2rem', textAlign: 'center' }}>
+        <div style={{ 
+          display: 'inline-flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          width: '64px', 
+          height: '64px',
+          background: 'linear-gradient(135deg, var(--color-accent-500), var(--color-primary-500))',
+          borderRadius: 'var(--radius-xl)',
+          fontSize: '2rem',
+          marginBottom: '1rem',
+          boxShadow: 'var(--shadow-lg)'
+        }}>
+          ⚙️
+        </div>
+        <h2 style={{ fontSize: '1.875rem', fontWeight: 700, color: 'var(--color-slate-900)', marginBottom: '0.5rem' }}>
+          Správa symbolů
+        </h2>
+        <p style={{ color: 'var(--color-slate-600)', fontSize: '1rem' }}>
+          Správa ISF symbol souborů pro analýzu Linux memory dumpů
+        </p>
+      </div>
 
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-4">
-          {error}
+        <div className="vtf-alert vtf-alert-danger" style={{ marginBottom: '1.5rem' }}>
+          <span className="vtf-alert-icon">⚠️</span>
+          <div className="vtf-alert-content">
+            <div className="vtf-alert-title">Chyba</div>
+            <div className="vtf-alert-description">{error}</div>
+          </div>
         </div>
       )}
 
       {/* Upload Section */}
-      <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-        <h3 className="text-xl font-semibold mb-4">Nahrát ISF symbol file</h3>
-        <p className="text-sm text-gray-600 mb-4">
+      <div className="vtf-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
+        <h3 style={{ fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.75rem', color: 'var(--color-slate-900)' }}>
+          Nahrát ISF symbol file
+        </h3>
+        <p style={{ fontSize: '0.875rem', color: 'var(--color-slate-600)', marginBottom: '1.5rem' }}>
           Pokud již máte vygenerovaný ISF soubor, můžete ho nahrát přímo zde.
         </p>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--color-slate-700)' }}>
               ISF soubor (.json)
             </label>
             <input
@@ -93,17 +120,29 @@ export default function SymbolManager() {
               accept=".json"
               onChange={handleFileChange}
               disabled={isUploading}
-              className="block w-full text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 focus:outline-none focus:border-blue-500 p-2"
+              style={{
+                display: 'block',
+                width: '100%',
+                fontSize: '0.875rem',
+                border: '1px solid var(--color-slate-300)',
+                borderRadius: 'var(--radius-md)',
+                cursor: 'pointer',
+                background: 'white',
+                padding: '0.625rem'
+              }}
             />
             {uploadFile && (
-              <p className="mt-1 text-sm text-gray-600">
-                {uploadFile.name} ({(uploadFile.size / 1024 / 1024).toFixed(2)} MB)
-              </p>
+              <div className="vtf-alert vtf-alert-info" style={{ marginTop: '0.75rem' }}>
+                <span className="vtf-alert-icon">📄</span>
+                <div className="vtf-alert-content" style={{ fontSize: '0.8125rem' }}>
+                  {uploadFile.name} ({(uploadFile.size / 1024 / 1024).toFixed(2)} MB)
+                </div>
+              </div>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: 600, marginBottom: '0.5rem', color: 'var(--color-slate-700)' }}>
               Kernel verze (volitelné)
             </label>
             <input
@@ -112,7 +151,14 @@ export default function SymbolManager() {
               onChange={(e) => setKernelVersion(e.target.value)}
               placeholder="např. 5.15.0-76-generic"
               disabled={isUploading}
-              className="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
+              style={{
+                display: 'block',
+                width: '100%',
+                padding: '0.625rem 1rem',
+                border: '1px solid var(--color-slate-300)',
+                borderRadius: 'var(--radius-md)',
+                fontSize: '0.9375rem'
+              }}
             />
           </div>
         </div>
@@ -120,71 +166,116 @@ export default function SymbolManager() {
         <button
           onClick={handleUpload}
           disabled={!uploadFile || isUploading}
-          className="bg-blue-600 hover:bg-blue-700 disabled:bg-gray-400 text-white font-semibold py-2 px-6 rounded-lg transition-colors"
+          className="vtf-btn vtf-btn-primary"
+          style={{ padding: '0.75rem 2rem', fontSize: '1rem' }}
         >
-          {isUploading ? 'Nahrávám...' : 'Nahrát ISF'}
+          {isUploading ? (
+            <>
+              <div style={{ 
+                width: '16px', 
+                height: '16px', 
+                border: '2px solid white', 
+                borderTopColor: 'transparent',
+                borderRadius: '50%',
+                animation: 'spin 0.8s linear infinite'
+              }}></div>
+              Nahrávám...
+            </>
+          ) : (
+            <>⬆️ Nahrát ISF</>
+          )}
         </button>
       </div>
 
       {/* Symbols List */}
-      <div className="bg-white shadow-md rounded-lg p-6">
-        <h3 className="text-xl font-semibold mb-4">
-          Dostupné symboly ({symbols.length})
-        </h3>
+      <div className="vtf-card" style={{ padding: '2rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 600, color: 'var(--color-slate-900)' }}>
+            Dostupné symboly
+          </h3>
+          <span className="vtf-badge vtf-badge-slate" style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}>
+            {symbols.length} {symbols.length === 1 ? 'symbol' : symbols.length < 5 ? 'symboly' : 'symbolů'}
+          </span>
+        </div>
 
         {isLoading ? (
-          <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="mt-4 text-gray-600">Načítám symboly...</p>
+          <div className="vtf-loading" style={{ minHeight: '300px' }}>
+            <div className="vtf-spinner"></div>
+            <p style={{ color: 'var(--color-slate-600)', marginTop: '1rem' }}>Načítám symboly...</p>
           </div>
         ) : symbols.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <p>Žádné symboly nenalezeny</p>
-            <p className="text-sm mt-2">Nahrajte vmlinux při uploadu Linux dumpu nebo nahrajte ISF soubor výše.</p>
+          <div className="vtf-empty-state">
+            <div className="vtf-empty-state-icon">⚙️</div>
+            <h3 className="vtf-empty-state-title">Žádné symboly nenalezeny</h3>
+            <p className="vtf-empty-state-description">
+              Nahrajte vmlinux při uploadu Linux dumpu nebo nahrajte ISF soubor výše.
+            </p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: 'var(--color-slate-50)', borderBottom: '2px solid var(--color-slate-200)' }}>
+                  <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-slate-700)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Symbol ID
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-slate-700)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Kernel Verze
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-slate-700)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Velikost
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-slate-700)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Vytvořeno
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th style={{ padding: '1rem 1.5rem', textAlign: 'left', fontSize: '0.75rem', fontWeight: 600, color: 'var(--color-slate-700)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                     Akce
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
+              <tbody>
                 {symbols.map((symbol) => (
-                  <tr key={symbol.symbol_id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-900">
-                      {symbol.symbol_id.substring(0, 12)}...
+                  <tr key={symbol.symbol_id} style={{ 
+                    borderBottom: '1px solid var(--color-slate-200)',
+                    transition: 'background var(--transition-fast)'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.background = 'var(--color-slate-50)'}
+                  onMouseLeave={(e) => e.currentTarget.style.background = 'white'}
+                  >
+                    <td style={{ padding: '1rem 1.5rem', fontSize: '0.875rem', fontFamily: 'var(--font-mono)', color: 'var(--color-slate-900)' }}>
+                      <span className="vtf-badge vtf-badge-slate" style={{ fontSize: '0.75rem', fontFamily: 'var(--font-mono)' }}>
+                        {symbol.symbol_id.substring(0, 16)}...
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {symbol.kernel_version || <span className="text-gray-400">N/A</span>}
+                    <td style={{ padding: '1rem 1.5rem', fontSize: '0.875rem', color: 'var(--color-slate-900)' }}>
+                      {symbol.kernel_version || <span style={{ color: 'var(--color-slate-400)' }}>N/A</span>}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {symbol.size_mb.toFixed(2)} MB
+                    <td style={{ padding: '1rem 1.5rem', fontSize: '0.875rem', color: 'var(--color-slate-900)' }}>
+                      <span className="vtf-badge vtf-badge-primary" style={{ fontSize: '0.75rem' }}>
+                        {symbol.size_mb.toFixed(2)} MB
+                      </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(symbol.created_at).toLocaleString('cs-CZ')}
+                    <td style={{ padding: '1rem 1.5rem', fontSize: '0.875rem', color: 'var(--color-slate-600)' }}>
+                      {new Date(symbol.created_at).toLocaleString('cs-CZ', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
+                    <td style={{ padding: '1rem 1.5rem', fontSize: '0.875rem' }}>
                       <button
                         onClick={() => handleDelete(symbol.symbol_id)}
-                        className="text-red-600 hover:text-red-800 font-medium"
+                        className="vtf-btn"
+                        style={{ 
+                          padding: '0.375rem 0.875rem',
+                          fontSize: '0.8125rem',
+                          background: 'var(--color-danger)',
+                          color: 'white'
+                        }}
                       >
-                        Smazat
+                        🗑️ Smazat
                       </button>
                     </td>
                   </tr>

@@ -42,88 +42,172 @@ export default function ProjectList({
     return '💾';
   };
 
-  const getOSBadgeColor = (osType?: string): string => {
-    if (osType === 'windows') return 'bg-blue-100 text-blue-700';
-    if (osType === 'linux') return 'bg-green-100 text-green-700';
-    return 'bg-gray-100 text-gray-600';
-  };
-
   return (
-    <div className="max-w-6xl mx-auto p-6">
-      <div className="mb-6">
-        <h1 className="text-4xl font-bold mb-2">VTF - Volatility Forensics Platform</h1>
-        <p className="text-gray-600">Vyberte existující projekt nebo vytvořte nový</p>
+    <div className="vtf-content-wide">
+      {/* Hero Section */}
+      <div style={{ marginBottom: '3rem', textAlign: 'center' }}>
+        <div style={{ 
+          display: 'inline-flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          width: '80px', 
+          height: '80px',
+          background: 'linear-gradient(135deg, var(--color-primary-500), var(--color-accent-500))',
+          borderRadius: 'var(--radius-xl)',
+          fontSize: '2.5rem',
+          marginBottom: '1.5rem',
+          boxShadow: 'var(--shadow-xl)'
+        }}>
+          🔍
+        </div>
+        <h1 style={{ fontSize: '3rem', fontWeight: 700, marginBottom: '0.75rem', color: 'var(--color-slate-900)' }}>
+          Volatility Forensics Platform
+        </h1>
+        <p style={{ fontSize: '1.125rem', color: 'var(--color-slate-600)', maxWidth: '600px', margin: '0 auto' }}>
+          Profesionální nástroj pro forensickou analýzu memory dumpů
+        </p>
       </div>
 
-      {/* Tlačítko pro vytvoření nového projektu */}
+      {/* Create New Project Button */}
       <button
         onClick={onCreateNew}
-        className="w-full mb-6 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-4 px-6 rounded-lg transition-colors flex items-center justify-center gap-2 shadow-md"
+        className="vtf-btn vtf-btn-primary"
         disabled={isLoading}
+        style={{ 
+          width: '100%', 
+          padding: '1.25rem 1.5rem',
+          fontSize: '1rem',
+          marginBottom: '3rem',
+          boxShadow: 'var(--shadow-lg)'
+        }}
       >
-        <span className="text-2xl">+</span>
-        <span>Vytvořit nový projekt (nahrát memory dump)</span>
+        <span style={{ fontSize: '1.5rem' }}>+</span>
+        <span>Vytvořit nový projekt</span>
       </button>
 
-      {/* Seznam existujících projektů */}
+      {/* Projects List */}
       {isLoading ? (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="inline-block animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-600 mb-4"></div>
-            <p className="text-gray-600">Načítám projekty...</p>
-          </div>
+        <div className="vtf-loading" style={{ minHeight: '300px' }}>
+          <div className="vtf-spinner"></div>
+          <p style={{ color: 'var(--color-slate-600)', marginTop: '1rem' }}>Načítám projekty...</p>
         </div>
       ) : projects.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-md p-8 text-center">
-          <div className="text-gray-400 text-6xl mb-4">📁</div>
-          <h3 className="text-xl font-semibold text-gray-700 mb-2">
-            Zatím žádné projekty
-          </h3>
-          <p className="text-gray-500">
+        <div className="vtf-empty-state">
+          <div className="vtf-empty-state-icon">📁</div>
+          <h3 className="vtf-empty-state-title">Zatím žádné projekty</h3>
+          <p className="vtf-empty-state-description">
             Vytvořte nový projekt nahráním memory dump souboru
           </p>
         </div>
       ) : (
         <div>
-          <h2 className="text-2xl font-bold mb-4">Existující projekty ({projects.length})</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: '1.5rem',
+            paddingBottom: '0.75rem',
+            borderBottom: '2px solid var(--color-slate-200)'
+          }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: 600, color: 'var(--color-slate-900)' }}>
+              Moje projekty
+            </h2>
+            <span className="vtf-badge vtf-badge-slate" style={{ fontSize: '0.875rem', padding: '0.5rem 1rem' }}>
+              {projects.length} {projects.length === 1 ? 'projekt' : projects.length < 5 ? 'projekty' : 'projektů'}
+            </span>
+          </div>
+          
+          <div style={{ 
+            display: 'grid', 
+            gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', 
+            gap: '1.5rem' 
+          }}>
             {projects.map(project => (
               <div
                 key={project.analysis_id}
                 onClick={() => onProjectSelect(project.analysis_id)}
-                className="bg-white rounded-lg shadow-md p-5 cursor-pointer hover:shadow-xl transition-all hover:scale-105 border-2 border-transparent hover:border-blue-500"
+                className="vtf-card"
+                style={{ 
+                  padding: '1.5rem',
+                  cursor: 'pointer',
+                  transition: 'all var(--transition-base)'
+                }}
               >
-                <div className="flex items-start justify-between mb-3">
-                  <div className="text-3xl">{getOSIcon(project.os_type)}</div>
-                  <div className="flex flex-col gap-1 items-end">
+                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                  <div style={{ 
+                    width: '48px', 
+                    height: '48px',
+                    background: project.os_type === 'windows' 
+                      ? 'linear-gradient(135deg, #3b82f6, #2563eb)' 
+                      : project.os_type === 'linux'
+                      ? 'linear-gradient(135deg, #10b981, #059669)'
+                      : 'linear-gradient(135deg, #64748b, #475569)',
+                    borderRadius: 'var(--radius-md)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '1.75rem',
+                    boxShadow: 'var(--shadow-md)'
+                  }}>
+                    {getOSIcon(project.os_type)}
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', alignItems: 'flex-end' }}>
                     {project.os_type && (
-                      <span className={`text-xs px-2 py-1 rounded font-medium ${getOSBadgeColor(project.os_type)}`}>
+                      <span className={`vtf-badge ${
+                        project.os_type === 'windows' ? 'vtf-badge-primary' :
+                        project.os_type === 'linux' ? 'vtf-badge-success' : 'vtf-badge-slate'
+                      }`}>
                         {project.os_type.toUpperCase()}
                       </span>
                     )}
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                    <span className="vtf-badge vtf-badge-slate" style={{ fontSize: '0.6875rem' }}>
                       {formatFileSize(project.size_bytes)}
                     </span>
                   </div>
                 </div>
                 
-                <h3 className="font-bold text-lg mb-1 truncate" title={project.project_name || project.filename}>
+                <h3 style={{ 
+                  fontSize: '1.125rem', 
+                  fontWeight: 600, 
+                  marginBottom: '0.5rem',
+                  color: 'var(--color-slate-900)',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap'
+                }} title={project.project_name || project.filename}>
                   {project.project_name || project.filename}
                 </h3>
                 
                 {project.project_name && project.project_name !== project.filename && (
-                  <p className="text-xs text-gray-500 truncate mb-2" title={project.filename}>
+                  <p style={{ 
+                    fontSize: '0.8125rem',
+                    color: 'var(--color-slate-500)',
+                    marginBottom: '0.75rem',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }} title={project.filename}>
                     {project.filename}
                   </p>
                 )}
                 
-                <p className="text-sm text-gray-500 mb-2">
+                <p style={{ fontSize: '0.875rem', color: 'var(--color-slate-600)', marginBottom: '1rem' }}>
                   {formatDate(project.uploaded_at)}
                 </p>
                 
-                <div className="mt-3 pt-3 border-t border-gray-200">
-                  <p className="text-xs text-gray-400 font-mono truncate" title={project.analysis_id}>
-                    ID: {project.analysis_id.substring(0, 16)}...
+                <div style={{ 
+                  paddingTop: '1rem', 
+                  borderTop: '1px solid var(--color-slate-200)'
+                }}>
+                  <p style={{ 
+                    fontSize: '0.75rem',
+                    color: 'var(--color-slate-400)',
+                    fontFamily: 'var(--font-mono)',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap'
+                  }} title={project.analysis_id}>
+                    ID: {project.analysis_id.substring(0, 20)}...
                   </p>
                 </div>
               </div>
