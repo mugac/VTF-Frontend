@@ -44,23 +44,55 @@ export interface RunAnalysisResponse {
   message: string;
   analysis_id: string;
   plugin: string;
-  status: 'in_progress' | 'completed';
+  status: 'running' | 'completed';
 }
 
 export interface StatusResponse {
   plugin: string;
-  status: 'completed' | 'not_started';
+  status: 'completed' | 'not_started' | 'running' | 'failed';
+  error?: string;
+  started_at?: string;
+  exit_code?: number;
+  failed_at?: string;
 }
 
 export interface AllStatusResponse {
   analysis_id: string;
   plugins: {
-    [pluginName: string]: 'completed' | 'not_started';
+    [pluginName: string]: 'completed' | 'not_started' | 'running' | 'failed';
   };
 }
 
 export interface ResultRow {
   [key: string]: any;
+}
+
+export interface PresetInfo {
+  description: string;
+  plugins: string[];
+}
+
+export interface PresetsResponse {
+  presets: { [name: string]: PresetInfo };
+  filtered_by_os?: string;
+}
+
+export interface BatchAnalysisResponse {
+  message: string;
+  analysis_id: string;
+  started: string[];
+  skipped: Array<{ plugin: string; reason: string }>;
+}
+
+export interface CorrelationResponse {
+  pid: number;
+  data: {
+    [label: string]: {
+      plugin: string;
+      count: number;
+      rows: ResultRow[];
+    };
+  };
 }
 
 /**
@@ -130,12 +162,38 @@ export async function getPlugins(): Promise<PluginsResponse> {
 /**
  * Spustí analýzu s vybraným pluginem
  */
-export async function runAnalysis(analysisId: string, plugin: string): Promise<RunAnalysisResponse> {
+export async function runAnalysis(analysisId: string, plugin: string, force: boolean = false): Promise<RunAnalysisResponse> {
   const response = await axios.post<RunAnalysisResponse>(
     `${API_BASE_URL}/api/v1/analysis/${analysisId}/run`,
-    { plugin }
+    { plugin, force }
   );
 
+  return response.data;
+}
+
+/**
+ * Spustí batch analýzu pro více pluginů najednou
+ */
+export async function runBatchAnalysis(
+  analysisId: string,
+  plugins: string[],
+  force: boolean = false
+): Promise<BatchAnalysisResponse> {
+  const response = await axios.post<BatchAnalysisResponse>(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/run-batch`,
+    { plugins, force }
+  );
+  return response.data;
+}
+
+/**
+ * Získá dostupné plugin presety
+ */
+export async function getPluginPresets(osType?: string): Promise<PresetsResponse> {
+  const params = osType ? `?os_type=${osType}` : '';
+  const response = await axios.get<PresetsResponse>(
+    `${API_BASE_URL}/api/v1/plugins/presets${params}`
+  );
   return response.data;
 }
 
@@ -191,6 +249,23 @@ export async function getProjectInfo(analysisId: string): Promise<any> {
     `${API_BASE_URL}/api/v1/uploads/${analysisId}`
   );
 
+  return response.data;
+}
+
+/**
+ * Exportuje výsledky pluginu jako soubor ke stažení
+ */
+export function getExportUrl(analysisId: string, plugin: string, format: 'json' | 'csv' = 'json'): string {
+  return `${API_BASE_URL}/api/v1/analysis/${analysisId}/export/${encodeURIComponent(plugin)}?format=${format}`;
+}
+
+/**
+ * Cross-plugin korelace podle PID
+ */
+export async function correlateByPid(analysisId: string, pid: number): Promise<CorrelationResponse> {
+  const response = await axios.get<CorrelationResponse>(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/correlate/${pid}`
+  );
   return response.data;
 }
 
@@ -303,5 +378,122 @@ export async function deleteSymbol(symbolId: string): Promise<{ success: boolean
     `${API_BASE_URL}/api/v1/symbols/${symbolId}`
   );
 
+  return response.data;
+}
+
+// ========== IOC Scanner API ==========
+
+export interface IOCList {
+  ips: string[];
+  domains: string[];
+  hashes: string[];
+  filenames: string[];
+  process_names: string[];
+  registry_keys: string[];
+  custom_patterns: string[];
+}
+
+export interface IOCMatch {
+  ioc_type: string;
+  ioc_value: string;
+  plugin: string;
+  field: string;
+  row_index: number;
+  row_data: Record<string, any>;
+}
+
+export interface IOCScanResponse {
+  total_matches: number;
+  matches_by_type: Record<string, number>;
+  matches: IOCMatch[];
+}
+
+export async function scanIOCs(analysisId: string, iocList: IOCList): Promise<IOCScanResponse> {
+  const response = await axios.post<IOCScanResponse>(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/ioc-scan`,
+    iocList
+  );
+  return response.data;
+}
+
+export async function saveIOCList(analysisId: string, iocList: IOCList): Promise<void> {
+  await axios.post(`${API_BASE_URL}/api/v1/analysis/${analysisId}/ioc-list`, iocList);
+}
+
+export async function getIOCList(analysisId: string): Promise<IOCList> {
+  const response = await axios.get<IOCList>(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/ioc-list`
+  );
+  return response.data;
+}
+
+// ========== Annotations API ==========
+
+export interface Annotation {
+  plugin: string;
+  row_index: number;
+  tag: string;
+  note?: string;
+  created_at?: string;
+}
+
+export interface AnnotationsResponse {
+  analysis_id: string;
+  annotations: Annotation[];
+  total: number;
+}
+
+export async function getAnnotations(analysisId: string, plugin?: string): Promise<AnnotationsResponse> {
+  const params = plugin ? `?plugin=${encodeURIComponent(plugin)}` : '';
+  const response = await axios.get<AnnotationsResponse>(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/annotations${params}`
+  );
+  return response.data;
+}
+
+export async function addAnnotation(
+  analysisId: string,
+  annotation: { plugin: string; row_index: number; tag: string; note?: string }
+): Promise<void> {
+  await axios.post(`${API_BASE_URL}/api/v1/analysis/${analysisId}/annotations`, annotation);
+}
+
+export async function deleteAnnotation(analysisId: string, plugin: string, rowIndex: number): Promise<void> {
+  await axios.delete(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/annotations?plugin=${encodeURIComponent(plugin)}&row_index=${rowIndex}`
+  );
+}
+
+// ========== Dashboard API ==========
+
+export interface DashboardData {
+  analysis_id: string;
+  project_name: string;
+  os_type?: string;
+  kernel_version?: string;
+  dump_size_mb: number;
+  completed_plugins: string[];
+  failed_plugins: string[];
+  summary: {
+    total_processes?: number;
+    unique_process_names?: number;
+    top_processes?: Array<[string, number]>;
+    total_connections?: number;
+    unique_foreign_addresses?: number;
+    foreign_addresses?: string[];
+    malfind_detections?: number;
+    suspicious_process_count?: number;
+    total_files_in_memory?: number;
+    annotations?: {
+      total: number;
+      by_tag: Record<string, number>;
+    };
+  };
+}
+
+export async function getDashboard(analysisId: string): Promise<DashboardData> {
+  const response = await axios.get<DashboardData>(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/dashboard`
+  );
   return response.data;
 }
