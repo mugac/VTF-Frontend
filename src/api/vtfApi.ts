@@ -497,3 +497,225 @@ export async function getDashboard(analysisId: string): Promise<DashboardData> {
   );
   return response.data;
 }
+
+// ========== Investigation / PID Watchlist API ==========
+
+export interface TrackedProcess {
+  pid: number;
+  process_name: string;
+  ppid?: number;
+  reason: string;
+  tags: string[];
+  source_plugin: string;
+  notes: string;
+  added_at?: string;
+}
+
+export interface TrackedPidsResponse {
+  analysis_id: string;
+  tracked_pids: TrackedProcess[];
+  total: number;
+}
+
+export interface ProcessTreeResponse {
+  source: string;
+  tree: ProcessTreeNode[];
+}
+
+export interface ProcessTreeNode {
+  PID?: number;
+  Pid?: number;
+  PPID?: number;
+  PPid?: number;
+  ImageFileName?: string;
+  COMM?: string;
+  Name?: string;
+  CreateTime?: string;
+  ExitTime?: string;
+  Threads?: number;
+  Handles?: number;
+  SessionId?: number;
+  Wow64?: boolean;
+  Path?: string;
+  Cmd?: string;
+  Audit?: string;
+  __children?: ProcessTreeNode[];
+  _tracked?: TrackedProcess;
+  [key: string]: any;
+}
+
+export interface ProcessTimelineEntry {
+  pid: number;
+  ppid: number;
+  name: string;
+  create_time: string | null;
+  exit_time: string | null;
+  is_tracked: boolean;
+  tracked_info: TrackedProcess | null;
+  has_malfind: boolean;
+}
+
+export interface ProcessTimelineResponse {
+  analysis_id: string;
+  processes: ProcessTimelineEntry[];
+  total: number;
+  tracked_count: number;
+  malfind_count: number;
+}
+
+export interface RegistryHive {
+  offset: number;
+  file_path: string;
+  short_name: string;
+}
+
+export interface RegistryKeysResponse {
+  key_path: string | null;
+  hive_offset: number | null;
+  keys: any[];
+  values: any[];
+  total_keys: number;
+  total_values: number;
+}
+
+export interface InvestigationSummary {
+  analysis_id: string;
+  tracked_pids: TrackedProcess[];
+  tracked_count: number;
+  completed_plugins: string[];
+  pid_results: Record<string, any>;
+  suggestions: string[];
+}
+
+// ── Tracked PIDs ──
+
+export async function getTrackedPids(analysisId: string, tag?: string): Promise<TrackedPidsResponse> {
+  const params = tag ? `?tag=${encodeURIComponent(tag)}` : '';
+  const response = await axios.get<TrackedPidsResponse>(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/tracked-pids${params}`
+  );
+  return response.data;
+}
+
+export async function trackPid(
+  analysisId: string,
+  data: {
+    pid: number;
+    process_name?: string;
+    ppid?: number;
+    reason?: string;
+    tags?: string[];
+    source_plugin?: string;
+    notes?: string;
+  }
+): Promise<{ message: string; tracked_process: TrackedProcess }> {
+  const response = await axios.post(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/tracked-pids`,
+    data
+  );
+  return response.data;
+}
+
+export async function updateTrackedPid(
+  analysisId: string,
+  pid: number,
+  updates: { reason?: string; tags?: string[]; notes?: string }
+): Promise<{ message: string; tracked_process: TrackedProcess }> {
+  const response = await axios.patch(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/tracked-pids/${pid}`,
+    updates
+  );
+  return response.data;
+}
+
+export async function untrackPid(analysisId: string, pid: number): Promise<void> {
+  await axios.delete(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/tracked-pids/${pid}`
+  );
+}
+
+// ── Process Tree & Timeline ──
+
+export async function getProcessTree(analysisId: string): Promise<ProcessTreeResponse> {
+  const response = await axios.get<ProcessTreeResponse>(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/process-tree`
+  );
+  return response.data;
+}
+
+export async function getProcessTimeline(analysisId: string): Promise<ProcessTimelineResponse> {
+  const response = await axios.get<ProcessTimelineResponse>(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/process-timeline`
+  );
+  return response.data;
+}
+
+// ── Registry Browser ──
+
+export async function getRegistryHives(analysisId: string): Promise<{ hives: RegistryHive[] }> {
+  const response = await axios.get(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/registry/hives`
+  );
+  return response.data;
+}
+
+export async function getRegistryKeys(
+  analysisId: string,
+  hiveOffset?: number,
+  keyPath?: string
+): Promise<RegistryKeysResponse> {
+  const params = new URLSearchParams();
+  if (hiveOffset !== undefined) params.set('hive_offset', String(hiveOffset));
+  if (keyPath !== undefined) params.set('key_path', keyPath);
+  const qs = params.toString() ? `?${params.toString()}` : '';
+  const response = await axios.get<RegistryKeysResponse>(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/registry/keys${qs}`
+  );
+  return response.data;
+}
+
+// ── Investigation Summary ──
+
+export async function getInvestigationSummary(analysisId: string): Promise<InvestigationSummary> {
+  const response = await axios.get<InvestigationSummary>(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/investigation-summary`
+  );
+  return response.data;
+}
+
+// ── Per-PID Plugin Execution ──
+
+export async function runAnalysisForPid(
+  analysisId: string,
+  plugin: string,
+  pid: number,
+  force: boolean = false
+): Promise<RunAnalysisResponse> {
+  const response = await axios.post<RunAnalysisResponse>(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/run`,
+    { plugin, force, pid }
+  );
+  return response.data;
+}
+
+export async function getPluginResultsForPid(
+  analysisId: string,
+  plugin: string,
+  pid: number
+): Promise<ResultRow[]> {
+  const response = await axios.get<ResultRow[]>(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/results/${encodeURIComponent(plugin)}?pid=${pid}`
+  );
+  return response.data;
+}
+
+export async function checkPluginStatusForPid(
+  analysisId: string,
+  plugin: string,
+  pid: number
+): Promise<StatusResponse> {
+  const response = await axios.get<StatusResponse>(
+    `${API_BASE_URL}/api/v1/analysis/${analysisId}/status?plugin=${encodeURIComponent(plugin)}&pid=${pid}`
+  );
+  return response.data;
+}

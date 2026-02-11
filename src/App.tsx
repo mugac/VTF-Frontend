@@ -4,6 +4,10 @@ import ProjectList from './components/ProjectList';
 import PluginSelector from './components/PluginSelector';
 import ResultsGrid from './components/ResultsGrid';
 import SymbolManager from './components/SymbolManager';
+import Dashboard from './components/Dashboard';
+import ProcessInvestigation from './components/ProcessInvestigation';
+import RegistryBrowser from './components/RegistryBrowser';
+import { InvestigationProvider, useInvestigation } from './context/InvestigationContext';
 import './App.css';
 import { 
   getPlugins, 
@@ -16,7 +20,7 @@ import {
 } from './api/vtfApi';
 import type { PluginInfo, ProjectInfo } from './api/vtfApi';
 
-type AppState = 'project-selection' | 'upload' | 'plugin-selection' | 'processing' | 'results' | 'symbols' | 'error';
+type AppState = 'project-selection' | 'upload' | 'plugin-selection' | 'processing' | 'results' | 'symbols' | 'error' | 'dashboard' | 'investigation' | 'registry';
 
 interface BatchProgress {
   plugin: string;
@@ -25,9 +29,18 @@ interface BatchProgress {
 }
 
 function App() {
+  return (
+    <InvestigationProvider>
+      <AppContent />
+    </InvestigationProvider>
+  );
+}
+
+function AppContent() {
+  const { setAnalysisId: setInvestigationAnalysisId } = useInvestigation();
   const [appState, setAppState] = useState<AppState>('project-selection');
   const [projects, setProjects] = useState<ProjectInfo[]>([]);
-  const [analysisId, setAnalysisId] = useState<string | null>(null);
+  const [analysisId, setAnalysisIdRaw] = useState<string | null>(null);
   const [plugins, setPlugins] = useState<PluginInfo[]>([]);
   const [selectedPlugin, setSelectedPlugin] = useState<string | null>(null);
   const [selectedPlugins, setSelectedPlugins] = useState<string[]>([]);
@@ -36,6 +49,12 @@ function App() {
   const [isLoadingProjects, setIsLoadingProjects] = useState(false);
   const [batchProgress, setBatchProgress] = useState<BatchProgress[]>([]);
   const [isBatchMode, setIsBatchMode] = useState(false);
+
+  // Sync analysisId with InvestigationContext
+  const setAnalysisId = useCallback((id: string | null) => {
+    setAnalysisIdRaw(id);
+    setInvestigationAnalysisId(id);
+  }, [setInvestigationAnalysisId]);
 
   // Načtení projektů při startu
   useEffect(() => {
@@ -252,6 +271,16 @@ function App() {
             <span className="vtf-sidebar-nav-icon">📁</span>
             <span>Projekty</span>
           </div>
+
+          {analysisId && (
+            <div 
+              className={`vtf-sidebar-nav-item ${appState === 'dashboard' ? 'active' : ''}`}
+              onClick={() => { setAppState('dashboard'); setError(null); }}
+            >
+              <span className="vtf-sidebar-nav-icon">📊</span>
+              <span>Dashboard</span>
+            </div>
+          )}
           
           {analysisId && (
             <div 
@@ -267,8 +296,28 @@ function App() {
             <div 
               className={`vtf-sidebar-nav-item ${appState === 'results' ? 'active' : ''}`}
             >
-              <span className="vtf-sidebar-nav-icon">📊</span>
+              <span className="vtf-sidebar-nav-icon">📋</span>
               <span>Výsledky</span>
+            </div>
+          )}
+
+          {analysisId && (
+            <div 
+              className={`vtf-sidebar-nav-item ${appState === 'investigation' ? 'active' : ''}`}
+              onClick={() => { setAppState('investigation'); setError(null); }}
+            >
+              <span className="vtf-sidebar-nav-icon">🔎</span>
+              <span>Vyšetřování</span>
+            </div>
+          )}
+
+          {analysisId && (
+            <div 
+              className={`vtf-sidebar-nav-item ${appState === 'registry' ? 'active' : ''}`}
+              onClick={() => { setAppState('registry'); setError(null); }}
+            >
+              <span className="vtf-sidebar-nav-icon">🗝️</span>
+              <span>Registry</span>
             </div>
           )}
           
@@ -305,6 +354,9 @@ function App() {
                   {appState === 'processing' && 'Probíhá Analýza'}
                   {appState === 'results' && `Výsledky: ${selectedPlugin?.split('.').pop()}`}
                   {appState === 'symbols' && 'Správa Symbolů'}
+                  {appState === 'dashboard' && 'Dashboard'}
+                  {appState === 'investigation' && 'Vyšetřování'}
+                  {appState === 'registry' && 'Prohlížeč Registrů'}
                 </h1>
                 {analysisId && appState !== 'symbols' && (
                   <p className="vtf-header-subtitle">ID: {analysisId.substring(0, 24)}...</p>
@@ -442,6 +494,29 @@ function App() {
           {appState === 'symbols' && (
             <div className="vtf-content-wide">
               <SymbolManager />
+            </div>
+          )}
+
+          {appState === 'dashboard' && analysisId && (
+            <div className="vtf-content-wide">
+              <Dashboard
+                analysisId={analysisId}
+                onNavigateToInvestigation={() => setAppState('investigation')}
+                onNavigateToRegistry={() => setAppState('registry')}
+                onNavigateToPlugins={() => setAppState('plugin-selection')}
+              />
+            </div>
+          )}
+
+          {appState === 'investigation' && analysisId && (
+            <div style={{ height: 'calc(100vh - 140px)', display: 'flex', flexDirection: 'column' }}>
+              <ProcessInvestigation analysisId={analysisId} />
+            </div>
+          )}
+
+          {appState === 'registry' && analysisId && (
+            <div style={{ height: 'calc(100vh - 140px)' }}>
+              <RegistryBrowser analysisId={analysisId} />
             </div>
           )}
 

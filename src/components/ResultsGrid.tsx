@@ -1,9 +1,10 @@
 import { AgGridReact } from 'ag-grid-react';
-import type { ColDef, CellClickedEvent } from 'ag-grid-community';
+import type { ColDef, CellClickedEvent, RowClassParams } from 'ag-grid-community';
 import { ModuleRegistry, AllCommunityModule } from 'ag-grid-community';
 import { useMemo, useState, useCallback } from 'react';
 import { getExportUrl, correlateByPid } from '../api/vtfApi';
 import type { CorrelationResponse } from '../api/vtfApi';
+import { useInvestigation } from '../context/InvestigationContext';
 import 'ag-grid-community/styles/ag-grid.css';
 import 'ag-grid-community/styles/ag-theme-alpine.css';
 
@@ -20,6 +21,7 @@ interface ResultsGridProps {
 export default function ResultsGrid({ data, analysisId, pluginName, onBackToUpload }: ResultsGridProps) {
   const [correlation, setCorrelation] = useState<CorrelationResponse | null>(null);
   const [isLoadingCorrelation, setIsLoadingCorrelation] = useState(false);
+  const { isTracked, addTrackedPid, removeTrackedPid, trackedPids } = useInvestigation();
 
   // Automaticky vygenerujeme sloupce na základě klíčů prvního řádku dat
   const columnDefs: ColDef[] = useMemo(() => {
@@ -70,6 +72,30 @@ export default function ResultsGrid({ data, analysisId, pluginName, onBackToUplo
     }
   }, [analysisId]);
 
+  // Track/untrack PID handler
+  const handleTrackPid = useCallback(async (pid: number, processName?: string) => {
+    if (isTracked(pid)) {
+      await removeTrackedPid(pid);
+    } else {
+      await addTrackedPid({
+        pid,
+        process_name: processName || '',
+        tags: ['interesting'],
+        source_plugin: pluginName,
+      });
+    }
+  }, [isTracked, addTrackedPid, removeTrackedPid, pluginName]);
+
+  // Row styling for tracked PIDs
+  const getRowStyle = useCallback((params: RowClassParams) => {
+    if (!params.data) return undefined;
+    const pid = params.data.PID ?? params.data.Pid ?? params.data.pid;
+    if (pid != null && isTracked(Number(pid))) {
+      return { background: 'rgba(250, 204, 21, 0.1)', borderLeft: '3px solid #f59e0b' };
+    }
+    return undefined;
+  }, [isTracked, trackedPids]);
+
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
       {/* Export toolbar */}
@@ -77,6 +103,19 @@ export default function ResultsGrid({ data, analysisId, pluginName, onBackToUplo
         {hasPidColumn && (
           <span style={{ fontSize: '0.8125rem', color: 'var(--color-slate-500)', marginRight: 'auto' }}>
             💡 Tip: Klikněte na PID pro cross-plugin korelaci
+            {correlation && (
+              <button
+                onClick={() => handleTrackPid(correlation.pid)}
+                style={{
+                  marginLeft: '0.75rem', padding: '0.25rem 0.625rem', fontSize: '0.75rem',
+                  border: '1px solid #f59e0b', borderRadius: 'var(--radius-md)',
+                  background: isTracked(correlation.pid) ? '#fef3c7' : 'white',
+                  color: '#b45309', cursor: 'pointer', fontWeight: 500,
+                }}
+              >
+                {isTracked(correlation.pid) ? '⭐ Sledován' : '☆ Sledovat PID ' + correlation.pid}
+              </button>
+            )}
           </span>
         )}
         <a
@@ -144,6 +183,7 @@ export default function ResultsGrid({ data, analysisId, pluginName, onBackToUplo
               paginationPageSize={50}
               animateRows={true}
               onCellClicked={handleCellClicked}
+              getRowStyle={getRowStyle}
             />
           </div>
 
